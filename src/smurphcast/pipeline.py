@@ -19,6 +19,7 @@ class ForecastPipeline:
     def fit(self, df, horizon: int, **kwargs):
         df = validate_series(df)
         df, meta = auto_transform(df)
+        self.meta_df = df
         X = make_time_features(df)
 
         # choose model
