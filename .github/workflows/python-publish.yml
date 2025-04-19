@@ -1,20 +1,21 @@
-# ─────────────────────────────────────────────────────────────
-#  Publish SmurphCast to PyPI on every _GitHub Release_
-#  (tag + release notes via the GitHub UI or `gh release …`)
-#  Docs: https://docs.pypi.org/trusted-publishers/using-a-publisher/
-# ─────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+#  Publish *SmurphCast* to PyPI whenever a GitHub Release
+#  is created (i.e. you click “Publish release” or use
+#  `gh release create …`).
+# ──────────────────────────────────────────────────────────────
 name: Upload Python Package
 
 on:
   release:
-    types: [published]          # fire ONLY when the release button is pressed
+    types: [published]      # run only for *published* releases
 
+# Needed once at the top‑level so the build job can checkout
 permissions:
-  contents: read                # allow checkout
-  id-token: write               # ***required for PyPI “trusted publishing”***
+  contents: read            # read the repo
+  id-token: write           # required for trusted‑publishing
 
 jobs:
-# ───────────────────────────── 1. build the wheel / sdist ──
+# ─────────────────────────────── 1. BUILD  ──────────────────────────────
   build:
     runs-on: ubuntu-latest
 
@@ -23,40 +24,40 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
-      - name: Build distributions
+      - name: Build wheel + sdist
         run: |
           python -m pip install --upgrade build
-          rm -rf dist/ build/
-          python -m build              # creates wheel + sdist in ./dist
+          python -m build          # → ./dist/*.whl  &  dist/*.tar.gz
 
-      - name: Upload artefacts
+      - name: Upload dist/ as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-dists
-          path: dist/
+          name: release-dists      # artifact name
+          path: dist/              # upload *folder*
 
-# ───────────────────────────── 2. upload to PyPI ────────────
+# ─────────────────────────────── 2. PUBLISH ─────────────────────────────
   publish:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: build                  # wait for the build job
+    needs: build                  # wait for wheel/sdist
     environment:
-      name: pypi                  # optional protected‑env name
-      url: https://pypi.org/project/smurphcast
+      name: pypi                  # (optional) protected env
+      url:  https://pypi.org/project/smurphcast
     permissions:
-      id-token: write             # (repeat – required in _this_ job too)
+      id-token: write             # **mandatory** in this job
+      contents: read
 
     steps:
-      - name: Download artefacts
-        uses: pypa/gh-action-pypi-publish@release/v1
-
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: release-dists
-          path: dist/
+          name: release-dists      # must match upload‑artifacts name
+          path: dist/              # place files back in ./dist
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1
+        uses: pypa/gh-action-pypi-publish@release/v1   # ← correct tag
         with:
-          packages-dir: dist/      # wheel + sdist from previous step
-          skip-existing: true      # ignore if that exact version is already on PyPI
+          packages-dir: dist/      # folder created above
+          skip-existing: true      # don’t error if version already there
