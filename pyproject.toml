@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name        = "smurphcast"
-version     = "0.1.2"
+version     = "1.0.1"
 description = "Boundary-aware, modular forecasting for percentage KPIs."
 authors     = [{ name = "Stephen Murphy", email = "stephenjmurph@gmail.com"}]
 readme      = "README.md"
