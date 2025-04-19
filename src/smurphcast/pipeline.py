@@ -8,7 +8,7 @@ End‑to‑end wrapper:
 """
 
 from __future__ import annotations
-
+import joblib, tempfile, os
 from dataclasses import dataclass
 from typing import Literal
 
@@ -93,3 +93,15 @@ class ForecastPipeline:
         preds = self._meta.inverse_transform(preds_trans)
         return pd.Series(preds, index=future_dates, name="yhat")
 
+    # -------------------------------------------------- #
+    #  PERSISTENCE
+    # -------------------------------------------------- #
+    def save(self, path: str | os.PathLike):
+        """
+        Persist the entire fitted pipeline with joblib (≈ pickling).
+        """
+        joblib.dump(self, path)
+
+    @classmethod
+    def load(cls, path: str | os.PathLike) -> "ForecastPipeline":
+        return joblib.load(path)

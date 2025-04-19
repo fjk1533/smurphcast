@@ -1,6 +1,7 @@
+from __future__ import annotations
 import pandas as pd
 from sklearn.metrics import mean_absolute_error
-from typing import Callable, List
+from typing import Callable, List, Dict
 
 
 def rolling_backtest(
@@ -10,11 +11,15 @@ def rolling_backtest(
     horizon: int,
     splits: int = 3,
     y_col: str = "y",
-) -> List[float]:
+    return_forecasts: bool = False,
+) -> Dict[str, object]:
     """
-    Simple rolling‑origin evaluation that returns MAE per split.
+    Returns dict with 'mae_per_fold' and optionally 'forecasts' (list of Series).
+    Each split trains on earlier part and tests on next *horizon* points.
     """
-    errors = []
+    errors: list[float] = []
+    fcsts: list[pd.Series] = []
+
     n = len(df)
     for i in range(splits, 0, -1):
         train_end = n - i * horizon
@@ -24,4 +29,12 @@ def rolling_backtest(
         model = fit_fn(train_df)
         preds = predict_fn(model, horizon)
         errors.append(mean_absolute_error(test_df[y_col].values, preds))
-    return errors
+
+        if return_forecasts:
+            preds.index = test_df.index           # align for convenience
+            fcsts.append(preds)
+
+    result = {"mae_per_fold": errors}
+    if return_forecasts:
+        result["forecasts"] = fcsts
+    return result
