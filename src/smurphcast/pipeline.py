@@ -1,22 +1,18 @@
-"""
-ForecastPipeline
-================
-End‑to‑end wrapper:
-
-    raw df  →  validate  →  transform  →  feature/lag engineering
-           →  fit chosen model  →  produce bounded forecasts
-"""
-
+# ─────────────────────────────────────────────────────────────────────────
+#  src/smurphcast/pipeline.py
+# ─────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
-import joblib, tempfile, os
+
+import os
+import joblib
 from dataclasses import dataclass
-from typing import Literal
+from typing import Dict, Callable, Literal
 
 import pandas as pd
 
 from .preprocessing.validator import validate_series
 from .preprocessing.transform import auto_transform, TransformMeta
-from .features.time_feats import make_time_features
+from .features.time_feats import make_time_features  # (still used by some models)
 from .models import (
     additive,
     beta_rnn,
@@ -25,30 +21,38 @@ from .models import (
     hybrid_esrnn,
     auto_selector,
 )
+
 # --------------------------------------------------------------------- #
-AVAILABLE_MODELS: dict[str, type] = {
-    "additive": additive.AdditiveModel,
-    "gbm": gbm.GBMModel,
-    "beta_rnn": beta_rnn.BetaRNNModel,
-    "qgbm": quantile_gbm.QuantileGBMModel,
-    "esrnn": hybrid_esrnn.HybridESRNNModel,
-    "auto": auto_selector.AutoSelector,
+# 1) Base models that AutoSelector will consider
+_BASE_MODELS: Dict[str, type] = {
+    "additive":  additive.AdditiveModel,
+    "gbm":       gbm.GBMModel,
+    "qgbm":      quantile_gbm.QuantileGBMModel,
+    "esrnn":     hybrid_esrnn.HybridESRNNModel,
+    "beta_rnn":  beta_rnn.BetaRNNModel,          # ← included
 }
 
-
+# 2) All models that ForecastPipeline can instantiate directly
+_AVAILABLE_MODELS: Dict[str, type] = {
+    **_BASE_MODELS,
+    "auto": auto_selector.AutoSelector,
+}
 # --------------------------------------------------------------------- #
+
+
 @dataclass
 class ForecastPipeline:
     """
-    Thin orchestration layer – not a heavy AutoML engine (yet).
+    End‑to‑end orchestrator for SmurphCast models.
 
     Parameters
     ----------
     model_name :
-        one of "additive", "gbm", "beta_rnn".
+        "additive" | "gbm" | "qgbm" | "esrnn" | "beta_rnn" | **"auto"**
     """
-
-    model_name: Literal["additive", "gbm", "beta_rnn"] = "additive"
+    model_name: Literal[
+        "additive", "gbm", "qgbm", "esrnn", "beta_rnn", "auto"
+    ] = "additive"
 
     # populated after `.fit()`
     _train_df: pd.DataFrame | None = None
@@ -56,76 +60,90 @@ class ForecastPipeline:
     _horizon: int | None = None
     _model = None
 
-    # -------------------------------------------------- #
+    # ──────────────────────────────────────────────────────────────
+    # AUTO‑SELECTOR HELPER
+    # ──────────────────────────────────────────────────────────────
+    def _make_auto_selector(self, horizon: int, splits: int = 3):
+        """
+        Build an AutoSelector instance with the required arguments.
+        """
+
+        def _factory_for(name: str) -> Callable[[pd.DataFrame], "ForecastPipeline"]:
+            def _f(df: pd.DataFrame):
+                return ForecastPipeline(model_name=name).fit(df, horizon=horizon)
+            return _f
+
+        factories = {k: _factory_for(k) for k in _BASE_MODELS}
+        return auto_selector.AutoSelector(
+            base_factories=factories,
+            horizon=horizon,
+            splits=splits,
+        )
+
+    # ──────────────────────────────────────────────────────────────
+    # FIT
+    # ──────────────────────────────────────────────────────────────
     def fit(self, df: pd.DataFrame, horizon: int, **model_kwargs):
         """
-        Validate → transform → fit chosen model.
-
-        Notes
-        -----
-        * Keeps a copy of the transformed training df so that
-          `predict()` can infer frequency & build future dates.
+        Validate → transform → fit the chosen model.
         """
         df = validate_series(df)
-        df, meta = auto_transform(df)      # adds ‘y_transformed’
-        self._train_df = df
-        self._meta = meta
-        self._horizon = horizon
+        df, meta = auto_transform(df)
 
-        model_cls = AVAILABLE_MODELS[self.model_name]
-        self._model = model_cls(**model_kwargs)
-        # many models still expect the original df (with ds & engineered cols)
-        self._model.fit(df, y_col="y_transformed")
+        self._train_df, self._meta, self._horizon = df, meta, horizon
+
+        if self.model_name == "auto":
+            self._model = self._make_auto_selector(horizon)
+        else:
+            model_cls = _AVAILABLE_MODELS[self.model_name]
+            self._model = model_cls(**model_kwargs)
+
+        # most base models expect engineered features already in df
+        y_col = "y_transformed" if "y_transformed" in df.columns else "y"
+        self._model.fit(df, y_col=y_col)
         return self
 
-    # -------------------------------------------------- #
-    # -------------------------------------------------- #
+    # ──────────────────────────────────────────────────────────────
+    # PREDICT (point)
+    # ──────────────────────────────────────────────────────────────
     def predict(self) -> pd.Series:
-        """
-        Produce `horizon` forecasts as a Pandas Series (index = future dates).
-        """
         if any(v is None for v in (self._train_df, self._meta, self._model)):
             raise RuntimeError("Call .fit() before .predict().")
 
         last = self._train_df["ds"].iloc[-1]
-        freq = pd.infer_freq(self._train_df["ds"])
-        if freq is None:
-            # fall back to the modal timedelta
-            freq = self._train_df["ds"].diff().mode().iloc[0]
-
-        # generate horizon + 1 points then drop the first (== last training ts)
-        full_range = pd.date_range(start=last, periods=self._horizon + 1, freq=freq)
-        future_dates = full_range[1:]
-
+        freq = pd.infer_freq(self._train_df["ds"]) or self._train_df["ds"].diff().mode().iloc[0]
+        future_dates = pd.date_range(last, periods=self._horizon + 1, freq=freq, closed="right")
         future_df = pd.DataFrame({"ds": future_dates})
-        preds_trans = self._model.predict(future_df)
-        preds = self._meta.inverse_transform(preds_trans)
-        return pd.Series(preds, index=future_dates, name="yhat")
 
+        yhat_trans = self._model.predict(future_df)
+        yhat = self._meta.inverse_transform(yhat_trans)
+        return pd.Series(yhat, index=future_dates, name="yhat")
+
+    # ──────────────────────────────────────────────────────────────
+    # PREDICT (interval)
+    # ──────────────────────────────────────────────────────────────
     def predict_interval(self, level: float = 0.8) -> pd.DataFrame:
         """
-        Return CI DataFrame (lower/median/upper) if the underlying
-        model supports it (currently only qgbm).
+        Return CI DataFrame if the underlying model supports it.
         """
-        if hasattr(self._model, "predict_interval"):
-            last = self._train_df["ds"].iloc[-1]
-            freq = pd.infer_freq(self._train_df["ds"]) or self._train_df["ds"].diff().mode().iloc[0]
-            full_range = pd.date_range(start=last, periods=self._horizon + 1, freq=freq)
-            future_df = pd.DataFrame({"ds": full_range[1:]})
-            df_ci = self._model.predict_interval(future_df)
-            # inverse‑transform all three columns
-            for col in df_ci.columns:
-                df_ci[col] = self._meta.inverse_transform(df_ci[col])
-            return df_ci
-        raise NotImplementedError("This model does not provide intervals.")
+        if not hasattr(self._model, "predict_interval"):
+            raise NotImplementedError("This model does not provide intervals.")
 
-    # -------------------------------------------------- #
-    #  PERSISTENCE
-    # -------------------------------------------------- #
+        last = self._train_df["ds"].iloc[-1]
+        freq = pd.infer_freq(self._train_df["ds"]) or self._train_df["ds"].diff().mode().iloc[0]
+        future_dates = pd.date_range(last, periods=self._horizon + 1, freq=freq, closed="right")
+        future_df = pd.DataFrame({"ds": future_dates})
+
+        df_ci = self._model.predict_interval(future_df, level=level)
+        for col in df_ci.columns:
+            df_ci[col] = self._meta.inverse_transform(df_ci[col])
+        return df_ci
+
+    # ──────────────────────────────────────────────────────────────
+    # PERSISTENCE
+    # ──────────────────────────────────────────────────────────────
     def save(self, path: str | os.PathLike):
-        """
-        Persist the entire fitted pipeline with joblib (≈ pickling).
-        """
+        """Persist the entire fitted pipeline."""
         joblib.dump(self, path)
 
     @classmethod
