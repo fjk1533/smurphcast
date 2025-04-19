@@ -27,13 +27,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip build
 
-    - name: Build package
+    - name: Build
       run: |
-        python -m build                   # creates dist/*.whl and *.tar.gz
+        pip install --upgrade build
+        rm -rf dist/ build/
+        python -m build
 
     - name: Publish to PyPI
-      if: github.event_name == 'push'
-      uses: pypa/gh-action-pypi-publish@v1.8.14
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
-        skip-existing: true               # don’t fail if version already on PyPI
+      uses: pypa/gh-action-pypi-publish@v1
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
