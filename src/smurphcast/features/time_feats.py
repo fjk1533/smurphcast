@@ -13,7 +13,7 @@ def make_time_features(df: pd.DataFrame, ds_col: str = "ds") -> pd.DataFrame:
 
     # Fourier – weekly (period=7 days)
     week_sec = 7 * 24 * 3600
-    ts_sec = t.view("int64") // 10 ** 9
+    ts_sec = t.astype("int64") // 10 ** 9      # was t.view("int64")
     for k in (1, 2, 3):
         df[f"wk_sin{k}"] = np.sin(2 * np.pi * k * ts_sec / week_sec)
         df[f"wk_cos{k}"] = np.cos(2 * np.pi * k * ts_sec / week_sec)
