@@ -17,9 +17,14 @@ import pandas as pd
 from .preprocessing.validator import validate_series
 from .preprocessing.transform import auto_transform, TransformMeta
 from .features.time_feats import make_time_features
-from .models import additive, beta_rnn, gbm, hybrid_esrnn, quantile_gbm
-from .models import auto_selector  # <‑‑ add just this line early in the file
-
+from .models import (
+    additive,
+    beta_rnn,
+    gbm,
+    quantile_gbm,
+    hybrid_esrnn,
+    auto_selector,
+)
 # --------------------------------------------------------------------- #
 AVAILABLE_MODELS: dict[str, type] = {
     "additive": additive.AdditiveModel,
@@ -27,6 +32,7 @@ AVAILABLE_MODELS: dict[str, type] = {
     "beta_rnn": beta_rnn.BetaRNNModel,
     "qgbm": quantile_gbm.QuantileGBMModel,
     "esrnn": hybrid_esrnn.HybridESRNNModel,
+    "auto": auto_selector.AutoSelector,
 }
 
 
