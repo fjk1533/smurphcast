@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name        = "smurphcast"
+version     = "0.0.1"
+description = "Boundary‑aware, modular forecasting for percentage KPIs."
+authors     = [{ name = "Stephen", email = "stephen@example.com" }]
+readme      = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "lightgbm>=4.3",          # tree‑based baseline
+    "torch>=2.3",             # small RNN / hybrid blocks
+    "statsmodels>=0.14",      # ETS / SARIMAX utilities
+    "matplotlib>=3.8",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev  = ["pytest", "ruff", "black", "pre-commit"]
+docs = ["mkdocs-material", "mkdocstrings[python]", "jupyter"]
+
+[project.urls]
+Homepage = "https://github.com/yourhandle/SmurphCast"
+Docs     = "https://yourhandle.github.io/SmurphCast"
+
+[project.scripts]
+smurphcast = "smurphcast.cli:app"     # Typer/FastAPI style CLI
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/README.md", "/LICENSE"]
