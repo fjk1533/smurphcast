@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name        = "smurphcast"
-version     = "0.0.1"
+version     = "0.1.1"
 description = "Boundary‑aware, modular forecasting for percentage KPIs."
-authors     = [{ name = "Stephen", email = "stephen@example.com" }]
+authors     = [{ name = "Stephen Murphy", email = "stephenjmurph@gmail.com"}]
 readme      = "README.md"
 requires-python = ">=3.9"
 
@@ -31,8 +31,8 @@ dev  = ["pytest", "ruff", "black", "pre-commit"]
 docs = ["mkdocs-material", "mkdocstrings[python]", "jupyter"]
 
 [project.urls]
-Homepage = "https://github.com/yourhandle/SmurphCast"
-Docs     = "https://yourhandle.github.io/SmurphCast"
+Homepage = "https://github.com/Halsted312/smurphcast"
+Docs     = "https://Halsted312.github.io/SmurphCast"
 
 [project.scripts]
 smurphcast = "smurphcast.cli:app"     # Typer/FastAPI style CLI
