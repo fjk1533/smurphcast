@@ -12,7 +12,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Stephen Murphy",
     author_email="<stephenjmurph@gmail.com>",
-    url="https://github.com/StephenMurphy/smurphcast",
+    url="https://github.com/Halsted312/smurphcast",
     python_requires=">=3.9",
     package_dir={"": "src"},
     packages=["smurphcast", "smurphcast_contrib"],
