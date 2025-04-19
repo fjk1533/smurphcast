@@ -19,6 +19,8 @@ dependencies = [
     "statsmodels>=0.14",      # ETS / SARIMAX utilities
     "matplotlib>=3.8",
     "tqdm>=4.66",
+    "scipy>=1.12",
+    "lightgbm>=4.3",
 ]
 
 [project.optional-dependencies]

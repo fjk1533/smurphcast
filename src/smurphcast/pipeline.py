@@ -4,6 +4,7 @@ from .preprocessing.transform import auto_transform
 from .features.time_feats import make_time_features
 from .evaluation.backtest import rolling_backtest
 from .models import additive, gbm, beta_rnn
+from .features.time_feats import make_time_features   # needed for future_df creation
 
 AVAILABLE_MODELS = {
     "additive": additive.AdditiveModel,
@@ -30,7 +31,11 @@ class ForecastPipeline:
         return self
 
     def predict(self):
-        future = self.meta.make_future_df(self.horizon)
-        future_feats = make_time_features(future)
-        preds = self.model.predict(future_feats)
-        return self.meta.inverse_transform(preds)
+        # build future dates at same freq as training index
+        last = self.meta_df["ds"].iloc[-1]
+        freq = pd.infer_freq(self.meta_df["ds"])
+        future_dates = pd.date_range(last, periods=self.horizon + 1, freq=freq, closed="right")
+        future_df = pd.DataFrame({"ds": future_dates})
+
+        preds_trans = self.model.predict(future_df)
+        return self.meta.inverse_transform(preds_trans)
