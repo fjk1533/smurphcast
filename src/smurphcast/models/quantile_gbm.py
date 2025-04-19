@@ -7,22 +7,23 @@ from ..features.lag_feats import add_lag_features, add_rolling_features
 _EXCLUDE = {"ds", "y", "y_transformed"}
 
 
-class GBMModel:
+class QuantileGBMModel:
     """
-    LightGBM regression for bounded KPIs with calendar + lag + rolling features.
+    Three LightGBM models (lower / median / upper) for prediction intervals.
     """
 
     def __init__(
         self,
         *,
+        alpha: float = 0.2,
         num_leaves: int = 31,
         n_estimators: int = 300,
         lags: tuple[int, ...] = (1, 7, 14),
         rolls: tuple[int, ...] = (4, 12),
     ):
+        self.alpha = alpha
         self.params = dict(
-            objective="regression",
-            metric="l2",
+            metric="quantile",
             learning_rate=0.05,
             num_leaves=num_leaves,
             verbosity=-1,
@@ -30,7 +31,7 @@ class GBMModel:
         self.n_estimators = n_estimators
         self.lags = lags
         self.rolls = rolls
-        self.model: lgb.Booster | None = None
+        self.models: dict[str, lgb.Booster] = {}
         self._feature_cols: list[str] | None = None
 
     # --------------------------------------------- #
@@ -47,20 +48,28 @@ class GBMModel:
         y = df.loc[X.index, y_col]
         self._feature_cols = list(X.columns)
 
-        dataset = lgb.Dataset(X, y)
-        self.model = lgb.train(self.params, dataset, num_boost_round=self.n_estimators)
+        quantiles = {
+            "lower": self.alpha / 2,
+            "median": 0.5,
+            "upper": 1 - self.alpha / 2,
+        }
+        for name, q in quantiles.items():
+            params = {**self.params, "objective": "quantile", "alpha": q}
+            dset = lgb.Dataset(X, y)
+            self.models[name] = lgb.train(params, dset, num_boost_round=self.n_estimators)
         return self
 
     # --------------------------------------------- #
     def _prep_future(self, future_df: pd.DataFrame) -> pd.DataFrame:
         Xf = self._build_X(future_df)
-        # ensure same columns & order as training set
         Xf = Xf.reindex(columns=self._feature_cols, fill_value=0)
         return Xf.ffill().bfill()
 
     # --------------------------------------------- #
     def predict(self, future_df: pd.DataFrame):
-        if self.model is None:
-            raise RuntimeError("Call .fit() first.")
+        return self.models["median"].predict(self._prep_future(future_df))
+
+    def predict_interval(self, future_df: pd.DataFrame) -> pd.DataFrame:
         Xf = self._prep_future(future_df)
-        return self.model.predict(Xf)
+        preds = {name: mdl.predict(Xf) for name, mdl in self.models.items()}
+        return pd.DataFrame(preds, index=future_df["ds"])

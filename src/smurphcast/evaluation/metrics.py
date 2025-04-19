@@ -16,3 +16,14 @@ def coverage(y_true, lower, upper):
     """Interval coverage: share of true vals inside [lower, upper]."""
     inside = (y_true >= lower) & (y_true <= upper)
     return inside.mean()
+
+def pinball_loss(y_true, y_pred, tau: float):
+    """
+    Pinball / quantile loss.
+
+    tau = desired quantile (0 < tau < 1)
+    """
+    error = y_true - y_pred
+    return (
+        np.maximum(tau * error, (tau - 1) * error).mean()
+    )

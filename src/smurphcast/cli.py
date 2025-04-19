@@ -36,12 +36,18 @@ def fit(
 def predict(
     model_path: Path = typer.Argument(..., exists=True),
     output: Path = typer.Option("forecast.csv"),
+    interval: bool = typer.Option(False, help="Include prediction interval."),
 ):
     """Load a saved model and produce its next-horizon forecast."""
     pipe = ForecastPipeline.load(model_path)
-    forecast = pipe.predict()
-    forecast.to_csv(output, header=True)
+    if interval:
+        df_ci = pipe.predict_interval()
+        df_ci.to_csv(output, index=True)
+    else:
+        forecast = pipe.predict()
+        forecast.to_csv(output, header=True)
     typer.echo(f"✅ Forecast saved to {output}")
+
 
 
 @app.command()

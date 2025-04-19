@@ -18,12 +18,14 @@ from .preprocessing.validator import validate_series
 from .preprocessing.transform import auto_transform, TransformMeta
 from .features.time_feats import make_time_features
 from .models import additive, beta_rnn, gbm
+from .models import additive, beta_rnn, gbm, quantile_gbm
 
 # --------------------------------------------------------------------- #
 AVAILABLE_MODELS: dict[str, type] = {
     "additive": additive.AdditiveModel,
     "gbm": gbm.GBMModel,
     "beta_rnn": beta_rnn.BetaRNNModel,
+    "qgbm": quantile_gbm.QuantileGBMModel,
 }
 
 
@@ -92,6 +94,23 @@ class ForecastPipeline:
         preds_trans = self._model.predict(future_df)
         preds = self._meta.inverse_transform(preds_trans)
         return pd.Series(preds, index=future_dates, name="yhat")
+
+    def predict_interval(self, level: float = 0.8) -> pd.DataFrame:
+        """
+        Return CI DataFrame (lower/median/upper) if the underlying
+        model supports it (currently only qgbm).
+        """
+        if hasattr(self._model, "predict_interval"):
+            last = self._train_df["ds"].iloc[-1]
+            freq = pd.infer_freq(self._train_df["ds"]) or self._train_df["ds"].diff().mode().iloc[0]
+            full_range = pd.date_range(start=last, periods=self._horizon + 1, freq=freq)
+            future_df = pd.DataFrame({"ds": full_range[1:]})
+            df_ci = self._model.predict_interval(future_df)
+            # inverse‑transform all three columns
+            for col in df_ci.columns:
+                df_ci[col] = self._meta.inverse_transform(df_ci[col])
+            return df_ci
+        raise NotImplementedError("This model does not provide intervals.")
 
     # -------------------------------------------------- #
     #  PERSISTENCE
