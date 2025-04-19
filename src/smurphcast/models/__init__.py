@@ -19,12 +19,14 @@ from .additive import AdditiveModel
 from .gbm import GBMModel
 from .quantile_gbm import QuantileGBMModel
 from .beta_rnn import BetaRNNModel
+from .hybrid_esrnn import HybridESRNNModel
 
 __all__: List[str] = [
     "AdditiveModel",
     "GBMModel",
     "QuantileGBMModel",
     "BetaRNNModel",
+    "HybridESRNNModel",
 ]
 
 # Optional: extend with community / contrib models *if present*.
